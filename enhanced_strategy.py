@@ -181,51 +181,51 @@ class EnhancedTradingStrategy:
         )
         
         return {
-            'rsi': rsi.iloc[-1] if len(rsi) > 0 and not pd.isna(rsi.iloc[-1]) else 50,
-            'ema9': ema9.iloc[-1] if len(ema9) > 0 and not pd.isna(ema9.iloc[-1]) else close.iloc[-1],
-            'ema21': ema21.iloc[-1] if len(ema21) > 0 and not pd.isna(ema21.iloc[-1]) else close.iloc[-1],
-            'supertrend_direction': current_direction,
-            'supertrend_exit_direction': exit_direction,
-            'atr': entry_st['atr'].iloc[-1] if len(entry_st['atr']) > 0 and not pd.isna(entry_st['atr'].iloc[-1]) else 0.01,
-            'close': close.iloc[-1],
-            'supertrend_value': entry_st['supertrend'].iloc[-1] if len(entry_st['supertrend']) > 0 else 0,
-            'supertrend_exit_value': exit_st['supertrend'].iloc[-1] if len(exit_st['supertrend']) > 0 else 0,
-            'trend_extreme_sl': trend_extreme_sl
-        }
+                'rsi': rsi.iloc[-1] if len(rsi) > 0 and not pd.isna(rsi.iloc[-1]) else 50,
+                'ema9': ema9.iloc[-1] if len(ema9) > 0 and not pd.isna(ema9.iloc[-1]) else close.iloc[-1],
+                'ema21': ema21.iloc[-1] if len(ema21) > 0 and not pd.isna(ema21.iloc[-1]) else close.iloc[-1],
+                'candle_color': 'GREEN' if close.iloc[-1] > df['open'].iloc[-1] else 'RED',
+                'supertrend_direction': current_direction,
+                'supertrend_exit_direction': exit_direction,
+                'atr': entry_st['atr'].iloc[-1] if len(entry_st['atr']) > 0 and not pd.isna(entry_st['atr'].iloc[-1]) else 0.01,
+                'close': close.iloc[-1],
+                'supertrend_value': entry_st['supertrend'].iloc[-1] if len(entry_st['supertrend']) > 0 else 0,
+                'supertrend_exit_value': exit_st['supertrend'].iloc[-1] if len(exit_st['supertrend']) > 0 else 0,
+                'trend_extreme_sl': trend_extreme_sl
+            }
+
 
 
 
     def check_entry_conditions(self, analysis: Dict) -> str:
-        """Check if all entry conditions are met - Updated to match main system"""
         if not analysis:
             return "NONE"
-        
+
         rsi = analysis.get('rsi', 0)
         ema9 = analysis.get('ema9', 0)
         ema21 = analysis.get('ema21', 0)
-        st_direction = analysis.get('supertrend_direction', 0)
-        
-        # BUY Conditions: RSI > 30 AND EMA9 > EMA21 AND Supertrend = 1 (bullish)
+        candle_color = analysis.get('candle_color', '')
+
+        # BUY: RSI > 50, Green candle, EMA9 > EMA21
         buy_conditions = (
-            rsi > 30 and
-            ema9 > ema21 and
-            st_direction == 1
-        )
-        
-        # SELL Conditions: RSI < 70 AND EMA9 < EMA21 AND Supertrend = -1 (bearish)
-        sell_conditions = (
-            rsi < 70 and
-            ema9 < ema21 and
-            st_direction == -1
+            rsi > 50 and
+            candle_color == 'GREEN' and
+            ema9 > ema21
         )
 
-        
+        # SELL: RSI < 50, Red candle, EMA9 < EMA21
+        sell_conditions = (
+            rsi < 50 and
+            candle_color == 'RED' and
+            ema9 < ema21
+        )
+
         if buy_conditions:
             return "BUY"
         elif sell_conditions:
             return "SELL"
-        else:
-            return "NONE"
+        return "NONE"
+
 
     def calculate_position_size(self, entry_price: float, stop_loss: float, risk_amount: float = 100) -> float:
         """Calculate position size based on risk"""
@@ -369,9 +369,8 @@ class EnhancedTradingStrategy:
         self.log(f"RSI: {analysis.get('rsi', 0):.2f}")
         self.log(f"EMA9: {analysis.get('ema9', 0):.5f}")
         self.log(f"EMA21: {analysis.get('ema21', 0):.5f}")
-        self.log(f"Supertrend Direction: {analysis.get('supertrend_direction', 0)}")
-        self.log(f"ATR: {analysis.get('atr', 0):.5f}")
-        
+        self.log(f"Candle: {analysis.get('candle_color', '')}")
+
         # Check for entry signals
         signal = self.check_entry_conditions(analysis)
         
